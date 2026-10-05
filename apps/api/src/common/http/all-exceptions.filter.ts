@@ -8,6 +8,7 @@ import {
 } from '@nestjs/common';
 import type { ErrorCode } from '@cvsu-dtr/shared';
 import type { Request, Response } from 'express';
+import { translateDbError } from '../../database/db-errors';
 import { DomainError, type DomainErrorKind } from '../domain/domain-error';
 
 /** API-DESIGN §9 error envelope. */
@@ -92,6 +93,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private map(exception: unknown): Mapped {
+    // Constraint violations that use cases didn't translate themselves (e.g. a race on a unique key).
+    const dbConflict = translateDbError(exception);
+    if (dbConflict) return this.map(dbConflict);
+
     if (exception instanceof DomainError) {
       return {
         status: STATUS_BY_KIND[exception.kind],

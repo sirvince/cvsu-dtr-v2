@@ -8,6 +8,8 @@ import { createValidationPipe } from './common/http/validation';
 import { buildPinoHttpOptions } from './common/logging/pino-options';
 import { ClockModule } from './common/time/clock.module';
 import { AppConfig, AppConfigModule } from './config/app-config';
+import { DatabaseModule } from './database/database.module';
+import { AuditModule } from './modules/audit/audit.module';
 import { HealthModule } from './modules/health/health.module';
 
 @Module({
@@ -25,6 +27,8 @@ import { HealthModule } from './modules/health/health.module';
     // Generous default per client IP. Login, uploads and exports add stricter @Throttle() limits.
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 300 }]),
     ClockModule,
+    DatabaseModule,
+    AuditModule,
     HealthModule,
   ],
   providers: [

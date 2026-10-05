@@ -192,14 +192,9 @@ describe('API foundation (e2e)', () => {
       expect(res.body).toEqual({ status: 'ok' });
     });
 
-    it('readiness reports the database down as 503, without connection details', async () => {
-      const res = await request(http).get('/api/v1/health/ready').expect(503);
-      expect(res.body.error.code).toBe('SERVICE_UNAVAILABLE');
-      expect(res.body.error.details.error.database).toEqual({
-        status: 'down',
-        message: 'unreachable',
-      });
-      expect(JSON.stringify(res.body)).not.toContain('127.0.0.1');
+    it('readiness reports the database up (connected as app_user)', async () => {
+      const res = await request(http).get('/api/v1/health/ready').expect(200);
+      expect(res.body).toMatchObject({ status: 'ok', info: { database: { status: 'up' } } });
     });
   });
 

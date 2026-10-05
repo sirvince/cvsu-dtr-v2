@@ -2,8 +2,9 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { HealthCheck, HealthCheckService, HealthIndicatorService } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
+import { InjectDataSource } from '@nestjs/typeorm';
+import type { DataSource } from 'typeorm';
 import { SkipEnvelope } from '../../common/http/response-envelope.interceptor';
-import { DatabasePing } from './database-ping';
 
 @ApiTags('health')
 @Controller('health')
@@ -13,7 +14,7 @@ export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
     private readonly indicators: HealthIndicatorService,
-    private readonly db: DatabasePing,
+    @InjectDataSource() private readonly dataSource: DataSource,
   ) {}
 
   /** Liveness: the process is up. No details (API-DESIGN §5.11). */
@@ -32,7 +33,7 @@ export class HealthController {
   private async checkDatabase() {
     const indicator = this.indicators.check('database');
     try {
-      await this.db.ping();
+      await this.dataSource.query('SELECT 1');
       return indicator.up();
     } catch {
       // The driver message can include host names; keep it out of the response.
