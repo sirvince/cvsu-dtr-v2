@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
-import { Brackets, type DataSource, type EntityManager } from 'typeorm';
+import { Brackets, type DataSource, type EntityManager, In } from 'typeorm';
 import type { Actor, RequestContext } from '../../../common/actor';
 import { ScopePolicy } from '../../../common/auth/scope-policy';
 import {
@@ -96,6 +96,28 @@ export class EmployeesService {
       .addOrderBy('e.id');
     if (departmentId) qb.andWhere('e.departmentId = :departmentId', { departmentId });
     return (await qb.getMany()).map(toView);
+  }
+
+  /** Status and department of each id that exists (unknown ids are simply absent). */
+  async statusesOf(
+    employeeIds: readonly string[],
+  ): Promise<Map<string, { status: 'ACTIVE' | 'INACTIVE'; departmentId: string }>> {
+    if (employeeIds.length === 0) return new Map();
+    const rows = await this.dataSource.getRepository(EmployeeEntity).find({
+      where: { id: In([...employeeIds]) },
+      select: { id: true, status: true, departmentId: true },
+    });
+    return new Map(rows.map((r) => [r.id, { status: r.status, departmentId: r.departmentId }]));
+  }
+
+  /** ACTIVE employees of a department, as of now. */
+  async activeIdsInDepartment(departmentId: string): Promise<string[]> {
+    const rows = await this.dataSource.getRepository(EmployeeEntity).find({
+      where: { departmentId, status: 'ACTIVE' },
+      select: { id: true },
+      order: { lastName: 'ASC', firstName: 'ASC' },
+    });
+    return rows.map((r) => r.id);
   }
 
   async departmentOf(employeeId: string): Promise<string | null> {

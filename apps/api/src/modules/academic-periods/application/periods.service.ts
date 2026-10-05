@@ -81,6 +81,10 @@ export class PeriodsService {
     return next ? toView(next) : null;
   }
 
+  async getSemester(id: string): Promise<SemesterEntity | null> {
+    return this.dataSource.getRepository(SemesterEntity).findOneBy({ id });
+  }
+
   async semesterOf(date: DateLike): Promise<SemesterEntity | null> {
     const d = iso(date);
     return this.dataSource

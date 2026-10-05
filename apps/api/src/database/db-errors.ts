@@ -19,6 +19,14 @@ const CONSTRAINT_ERRORS: Record<string, { code: ErrorCode; message: string }> = 
     code: 'EMPLOYEE_NUMBER_EXISTS',
     message: 'An employee with this employee number already exists.',
   },
+  ex_employee_schedules_one_approved: {
+    code: 'SCHEDULE_OVERLAP',
+    message: 'Another approved schedule already covers these dates for this employee.',
+  },
+  schedule_templates_name_key: {
+    code: 'CONFLICT',
+    message: 'A schedule template with this name already exists.',
+  },
   ex_dtr_periods_no_overlap: {
     code: 'PERIOD_OVERLAP',
     message: 'This period overlaps an existing DTR period.',

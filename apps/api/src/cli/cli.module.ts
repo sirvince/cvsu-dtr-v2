@@ -6,6 +6,7 @@ import { DatabaseModule } from '../database/database.module';
 import { AuditModule } from '../modules/audit/audit.module';
 import { AuthModule } from '../modules/auth/auth.module';
 import { DevicesModule } from '../modules/devices/devices.module';
+import { SchedulesModule } from '../modules/schedules/schedules.module';
 
 /**
  * What the operator CLIs need, without the HTTP layer. Connects as app_user like the API.
@@ -19,6 +20,7 @@ import { DevicesModule } from '../modules/devices/devices.module';
     AuditModule,
     AuthModule,
     DevicesModule,
+    SchedulesModule,
     ThrottlerModule.forRoot([]),
   ],
 })

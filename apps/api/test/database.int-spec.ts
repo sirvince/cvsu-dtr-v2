@@ -25,6 +25,7 @@ const TABLES_0003 = [
   'dtr_periods',
   'semesters',
 ];
+const TABLES_0004 = ['employee_schedules', 'schedule_blocks', 'schedule_templates'];
 
 /** Postgres error as pg reports it inside TypeORM's QueryFailedError. */
 async function pgError(promise: Promise<unknown>): Promise<{ code: string; constraint?: string }> {
@@ -66,8 +67,11 @@ describe('database foundation (Testcontainers, PostgreSQL 17)', () => {
       'InitUsersAuth1791100000001',
       'OrgAndDevices1791100000002',
       'AcademicCalendar1791100000003',
+      'Schedules1791100000004',
     ]);
-    expect(await publicTables()).toEqual([...TABLES_0001, ...TABLES_0002, ...TABLES_0003].sort());
+    expect(await publicTables()).toEqual(
+      [...TABLES_0001, ...TABLES_0002, ...TABLES_0003, ...TABLES_0004].sort(),
+    );
 
     const owners = await migrator.query<{ tableowner: string }[]>(
       `SELECT DISTINCT tableowner FROM pg_tables WHERE schemaname = 'public'`,
@@ -217,6 +221,52 @@ describe('database foundation (Testcontainers, PostgreSQL 17)', () => {
       });
     });
 
+    describe('employee_schedules 🔒 at most one APPROVED schedule per date', () => {
+      let employeeId: string;
+      let semesterId: string;
+      const insert = (status: string, from: string, to: string) =>
+        app.query(
+          `INSERT INTO employee_schedules (employee_id, semester_id, effective_from, effective_to, status, approved_directly)
+           VALUES ($1, $2, $3, $4, $5, true)`,
+          [employeeId, semesterId, from, to, status],
+        );
+
+      beforeAll(async () => {
+        const [year] = await app.query<{ id: string }[]>(
+          `INSERT INTO academic_years (code, start_date, end_date) VALUES ('2026-2027', '2026-08-01', '2027-07-31') RETURNING id`,
+        );
+        const [semester] = await app.query<{ id: string }[]>(
+          `INSERT INTO semesters (academic_year_id, code, start_date, end_date) VALUES ($1, 'FIRST', '2026-08-11', '2026-12-19') RETURNING id`,
+          [year!.id],
+        );
+        const [employee] = await app.query<{ id: string }[]>(
+          `SELECT id FROM employees WHERE employee_number = 'E-0001'`,
+        );
+        semesterId = semester!.id;
+        employeeId = employee!.id;
+      });
+
+      it('a second overlapping APPROVED schedule is refused (23P01 → 409 SCHEDULE_OVERLAP)', async () => {
+        await insert('APPROVED', '2026-08-11', '2026-10-15');
+        let thrown: unknown;
+        try {
+          await insert('APPROVED', '2026-10-15', '2026-12-19');
+        } catch (error) {
+          thrown = error;
+        }
+        expect(translateDbError(thrown)).toMatchObject({ code: 'SCHEDULE_OVERLAP' });
+      });
+
+      it('a SUPERSEDED schedule may overlap; the next day may start a new APPROVED one', async () => {
+        await expect(insert('SUPERSEDED', '2026-08-11', '2026-12-19')).resolves.toBeDefined();
+        await expect(insert('APPROVED', '2026-10-16', '2026-12-19')).resolves.toBeDefined();
+      });
+
+      it('app_user cannot delete a schedule', async () => {
+        expect((await pgError(app.query(`DELETE FROM employee_schedules`))).code).toBe('42501');
+      });
+    });
+
     describe('dtr_periods 🔒 semi-monthly, no overlap', () => {
       const insert = (start: string, end: string, half: number) =>
         app.query(
@@ -272,6 +322,8 @@ describe('database foundation (Testcontainers, PostgreSQL 17)', () => {
 
   it('migration:revert removes every table again', async () => {
     await app.destroy();
+    await migrator.undoLastMigration({ transaction: 'each' });
+    expect(await publicTables()).toEqual([...TABLES_0001, ...TABLES_0002, ...TABLES_0003].sort());
     await migrator.undoLastMigration({ transaction: 'each' });
     expect(await publicTables()).toEqual([...TABLES_0001, ...TABLES_0002].sort());
     await migrator.undoLastMigration({ transaction: 'each' });

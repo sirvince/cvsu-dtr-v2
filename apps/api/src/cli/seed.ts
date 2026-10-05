@@ -1,5 +1,9 @@
 import { NestFactory } from '@nestjs/core';
 import { DEFAULT_DEVICE, DevicesService } from '../modules/devices/devices.module';
+import {
+  DEFAULT_TEMPLATE,
+  SchedulesService,
+} from '../modules/schedules/application/schedules.service';
 import { CliModule } from './cli.module';
 
 /**
@@ -11,6 +15,8 @@ async function main(): Promise<void> {
   try {
     const deviceId = await app.get(DevicesService).ensureDefaultDevice();
     console.log(`Device ${DEFAULT_DEVICE.code}: ${deviceId}`);
+    const templateId = await app.get(SchedulesService).ensureDefaultTemplate();
+    console.log(`Schedule template ${DEFAULT_TEMPLATE.name}: ${templateId}`);
   } finally {
     await app.close();
   }

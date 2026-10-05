@@ -16,6 +16,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { CalendarModule } from './modules/calendar/calendar.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { DevicesModule } from './modules/devices/devices.module';
+import { SchedulesModule } from './modules/schedules/schedules.module';
 import { EmployeesModule } from './modules/employees/employees.module';
 import { HealthModule } from './modules/health/health.module';
 
@@ -43,6 +44,7 @@ import { HealthModule } from './modules/health/health.module';
     EmployeesModule,
     AcademicPeriodsModule,
     CalendarModule,
+    SchedulesModule,
   ],
   providers: [
     { provide: APP_PIPE, useFactory: createValidationPipe },
