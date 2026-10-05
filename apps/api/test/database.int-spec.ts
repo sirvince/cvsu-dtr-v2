@@ -18,6 +18,13 @@ const TABLES_0002 = [
   'employees',
   'user_department_scopes',
 ];
+const TABLES_0003 = [
+  'academic_years',
+  'calendar_event_departments',
+  'calendar_events',
+  'dtr_periods',
+  'semesters',
+];
 
 /** Postgres error as pg reports it inside TypeORM's QueryFailedError. */
 async function pgError(promise: Promise<unknown>): Promise<{ code: string; constraint?: string }> {
@@ -58,8 +65,9 @@ describe('database foundation (Testcontainers, PostgreSQL 17)', () => {
     expect(ran.map((m) => m.name)).toEqual([
       'InitUsersAuth1791100000001',
       'OrgAndDevices1791100000002',
+      'AcademicCalendar1791100000003',
     ]);
-    expect(await publicTables()).toEqual([...TABLES_0001, ...TABLES_0002].sort());
+    expect(await publicTables()).toEqual([...TABLES_0001, ...TABLES_0002, ...TABLES_0003].sort());
 
     const owners = await migrator.query<{ tableowner: string }[]>(
       `SELECT DISTINCT tableowner FROM pg_tables WHERE schemaname = 'public'`,
@@ -208,10 +216,64 @@ describe('database foundation (Testcontainers, PostgreSQL 17)', () => {
         });
       });
     });
+
+    describe('dtr_periods 🔒 semi-monthly, no overlap', () => {
+      const insert = (start: string, end: string, half: number) =>
+        app.query(
+          `INSERT INTO dtr_periods (name, start_date, end_date, period_half) VALUES ('p', $1, $2, $3)`,
+          [start, end, half],
+        );
+
+      it('accepts real halves, including February 16–28', async () => {
+        await expect(insert('2027-02-01', '2027-02-15', 1)).resolves.toBeDefined();
+        await expect(insert('2027-02-16', '2027-02-28', 2)).resolves.toBeDefined();
+      });
+
+      it('rejects anything that is not exactly one half of a month (23514)', async () => {
+        for (const [start, end, half] of [
+          ['2027-03-01', '2027-03-14', 1], // too short
+          ['2027-03-16', '2027-03-30', 2], // March has 31 days
+          ['2027-03-02', '2027-03-16', 1], // wrong start day
+          ['2027-03-01', '2027-03-31', 1], // a whole month (v2 shape)
+        ] as const) {
+          const error = await pgError(insert(start, end, half));
+          expect(error).toMatchObject({ code: '23514', constraint: 'ck_dtr_periods_semi_monthly' });
+        }
+      });
+
+      it('rejects an overlapping period and maps it to 409 PERIOD_OVERLAP', async () => {
+        let thrown: unknown;
+        try {
+          await insert('2027-02-01', '2027-02-15', 1);
+        } catch (error) {
+          thrown = error;
+        }
+        expect((thrown as { driverError: { code: string } }).driverError.code).toBe('23P01');
+        expect(translateDbError(thrown)).toMatchObject({
+          code: 'PERIOD_OVERLAP',
+          kind: 'CONFLICT',
+        });
+      });
+
+      it('a GOVERNMENT_ANNOUNCEMENT can never be department-scoped (23514)', async () => {
+        const error = await pgError(
+          app.query(
+            `INSERT INTO calendar_events (event_date, type, name, scope) VALUES ('2026-10-27', 'GOVERNMENT_ANNOUNCEMENT', 'x', 'DEPARTMENTS')`,
+          ),
+        );
+        expect(error.code).toBe('23514');
+      });
+
+      it('app_user cannot delete a period', async () => {
+        expect((await pgError(app.query(`DELETE FROM dtr_periods`))).code).toBe('42501');
+      });
+    });
   });
 
   it('migration:revert removes every table again', async () => {
     await app.destroy();
+    await migrator.undoLastMigration({ transaction: 'each' });
+    expect(await publicTables()).toEqual([...TABLES_0001, ...TABLES_0002].sort());
     await migrator.undoLastMigration({ transaction: 'each' });
     expect(await publicTables()).toEqual(TABLES_0001);
     await migrator.undoLastMigration({ transaction: 'each' });

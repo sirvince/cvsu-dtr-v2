@@ -10,8 +10,10 @@ import { buildPinoHttpOptions } from './common/logging/pino-options';
 import { ClockModule } from './common/time/clock.module';
 import { AppConfig, AppConfigModule } from './config/app-config';
 import { DatabaseModule } from './database/database.module';
+import { AcademicPeriodsModule } from './modules/academic-periods/academic-periods.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { CalendarModule } from './modules/calendar/calendar.module';
 import { DepartmentsModule } from './modules/departments/departments.module';
 import { DevicesModule } from './modules/devices/devices.module';
 import { EmployeesModule } from './modules/employees/employees.module';
@@ -39,6 +41,8 @@ import { HealthModule } from './modules/health/health.module';
     DepartmentsModule,
     DevicesModule,
     EmployeesModule,
+    AcademicPeriodsModule,
+    CalendarModule,
   ],
   providers: [
     { provide: APP_PIPE, useFactory: createValidationPipe },

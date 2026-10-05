@@ -19,6 +19,18 @@ const CONSTRAINT_ERRORS: Record<string, { code: ErrorCode; message: string }> = 
     code: 'EMPLOYEE_NUMBER_EXISTS',
     message: 'An employee with this employee number already exists.',
   },
+  ex_dtr_periods_no_overlap: {
+    code: 'PERIOD_OVERLAP',
+    message: 'This period overlaps an existing DTR period.',
+  },
+  academic_years_code_key: {
+    code: 'CONFLICT',
+    message: 'An academic year with this code already exists.',
+  },
+  semesters_academic_year_id_code_key: {
+    code: 'CONFLICT',
+    message: 'This academic year already has that semester.',
+  },
   departments_code_key: {
     code: 'CONFLICT',
     message: 'A department with this code already exists.',
