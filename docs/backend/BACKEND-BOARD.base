@@ -1,0 +1,103 @@
+filters:
+  and:
+    - file.inFolder("CVSU-DTR/v3/backend/tickets")
+    - file.ext == "md"
+formulas:
+  days_left: if(day, (date(day) - today()).days, "")
+  is_late: if(day && status != "DONE", date(day) < today(), false)
+properties:
+  id:
+    displayName: ID
+  title:
+    displayName: Title
+  priority:
+    displayName: Pri
+  status:
+    displayName: Status
+  week:
+    displayName: Week
+  day:
+    displayName: Day
+  estimate_h:
+    displayName: Est (h)
+  depends_on:
+    displayName: Depends on
+  blocked_by:
+    displayName: Blocked by
+  epic:
+    displayName: Epic
+  formula.days_left:
+    displayName: Days left
+  formula.is_late:
+    displayName: Late?
+views:
+  - type: table
+    name: By week
+    groupBy:
+      property: week
+      direction: ASC
+    order:
+      - id
+      - title
+      - priority
+      - status
+      - day
+      - estimate_h
+      - depends_on
+      - blocked_by
+      - formula.days_left
+    summaries:
+      estimate_h: Sum
+  - type: table
+    name: Open
+    filters:
+      and:
+        - status != "DONE"
+    groupBy:
+      property: status
+      direction: ASC
+    order:
+      - id
+      - title
+      - priority
+      - status
+      - day
+      - formula.is_late
+      - estimate_h
+    summaries:
+      estimate_h: Sum
+  - type: table
+    name: Blocked or at risk
+    filters:
+      or:
+        - status == "BLOCKED"
+        - blocked_by.length > 0
+    order:
+      - id
+      - title
+      - status
+      - day
+      - blocked_by
+  - type: table
+    name: Cut list (P2)
+    filters:
+      and:
+        - priority == "P2"
+    order:
+      - id
+      - title
+      - status
+      - day
+      - estimate_h
+  - type: table
+    name: Done
+    filters:
+      and:
+        - status == "DONE"
+    order:
+      - id
+      - title
+      - day
+      - estimate_h
+    summaries:
+      estimate_h: Sum
