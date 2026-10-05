@@ -1,6 +1,9 @@
 import { validateEnv } from './env.schema';
 
-const valid = { DATABASE_URL: 'postgres://app_user:pw@localhost:5432/cvsu_dtr' };
+const valid = {
+  DATABASE_URL: 'postgres://app_user:pw@localhost:5432/cvsu_dtr',
+  JWT_ACCESS_SECRET: 'x'.repeat(32),
+};
 
 describe('validateEnv', () => {
   it('applies defaults', () => {
@@ -13,6 +16,8 @@ describe('validateEnv', () => {
       LOG_LEVEL: 'info',
       TRUST_PROXY: 0,
       WORKER: false,
+      JWT_ACCESS_TTL: 900,
+      REFRESH_TOKEN_TTL_DAYS: 7,
     });
   });
 
@@ -24,6 +29,12 @@ describe('validateEnv', () => {
   it('refuses to start without DATABASE_URL, with a clear message', () => {
     expect(() => validateEnv({})).toThrow(
       /Invalid environment configuration[\s\S]*is required[\s\S]*DATABASE_URL/,
+    );
+  });
+
+  it('refuses a short JWT secret', () => {
+    expect(() => validateEnv({ ...valid, JWT_ACCESS_SECRET: 'short' })).toThrow(
+      /JWT_ACCESS_SECRET/,
     );
   });
 

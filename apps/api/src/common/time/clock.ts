@@ -59,6 +59,7 @@ export class FixedClock extends BaseClock {
     this.current = typeof instant === 'string' ? Temporal.Instant.from(instant) : instant;
   }
 
+  /** Exact units only (hours, minutes, seconds…): an Instant has no calendar, so no days. */
   advance(duration: Temporal.DurationLike): void {
     this.current = this.current.add(duration);
   }

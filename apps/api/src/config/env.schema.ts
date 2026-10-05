@@ -19,6 +19,11 @@ export const envSchema = z.object({
   /** Number of reverse proxies in front of the API (1 behind Nginx). Needed for correct client IPs. */
   TRUST_PROXY: z.coerce.number().int().min(0).max(5).default(0),
   WORKER: z.stringbool().default(false),
+  /** HS256 signing key for access tokens. Generate with: openssl rand -base64 48 */
+  JWT_ACCESS_SECRET: z.string().min(32, 'must be at least 32 characters'),
+  /** Access token lifetime in seconds (SECURITY-PRIVACY §2: 15 min). */
+  JWT_ACCESS_TTL: z.coerce.number().int().min(60).max(3600).default(900),
+  REFRESH_TOKEN_TTL_DAYS: z.coerce.number().int().min(1).max(30).default(7),
 });
 
 export type Env = z.infer<typeof envSchema>;

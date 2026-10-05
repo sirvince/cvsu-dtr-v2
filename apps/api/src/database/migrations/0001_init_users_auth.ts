@@ -23,6 +23,8 @@ export class InitUsersAuth1791100000001 implements MigrationInterface {
         locked_until        timestamptz,
         last_login_at       timestamptz,
         password_changed_at timestamptz,
+        -- JWT "ver" claim: +1 on password or role change, so older access tokens stop working
+        token_version       int  NOT NULL DEFAULT 1,
         created_at          timestamptz NOT NULL DEFAULT now(),
         updated_at          timestamptz NOT NULL DEFAULT now()
       )`);

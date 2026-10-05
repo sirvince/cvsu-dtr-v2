@@ -4,10 +4,12 @@ import { HealthCheck, HealthCheckService, HealthIndicatorService } from '@nestjs
 import { SkipThrottle } from '@nestjs/throttler';
 import { InjectDataSource } from '@nestjs/typeorm';
 import type { DataSource } from 'typeorm';
+import { Public } from '../../common/auth/decorators';
 import { SkipEnvelope } from '../../common/http/response-envelope.interceptor';
 
 @ApiTags('health')
 @Controller('health')
+@Public()
 @SkipThrottle()
 @SkipEnvelope()
 export class HealthController {

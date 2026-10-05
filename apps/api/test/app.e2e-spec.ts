@@ -6,6 +6,7 @@ import { IsInt, IsString, Matches, Min, ValidateNested } from 'class-validator';
 import request from 'supertest';
 import type { App } from 'supertest/types';
 import { AppModule } from '../src/app.module';
+import { Public } from '../src/common/auth/decorators';
 import { DomainError } from '../src/common/domain/domain-error';
 import { Paginated, PaginationQueryDto } from '../src/common/http/paginated';
 import { configureApp } from '../src/configure-app';
@@ -29,6 +30,7 @@ class CreateThingDto {
 }
 
 /** Test-only routes that exercise the global pipeline. */
+@Public()
 @Controller('probe')
 class ProbeController {
   @Get('thing')
