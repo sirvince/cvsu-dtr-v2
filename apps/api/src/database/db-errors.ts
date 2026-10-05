@@ -19,6 +19,10 @@ const CONSTRAINT_ERRORS: Record<string, { code: ErrorCode; message: string }> = 
     code: 'EMPLOYEE_NUMBER_EXISTS',
     message: 'An employee with this employee number already exists.',
   },
+  departments_code_key: {
+    code: 'CONFLICT',
+    message: 'A department with this code already exists.',
+  },
 };
 
 interface PgDriverError {

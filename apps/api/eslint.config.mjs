@@ -51,12 +51,13 @@ export default tseslint.config(
     },
   },
   {
-    // Jest matchers (expect.any, expect.objectContaining) are typed `any`.
+    // Jest matchers (expect.any, expect.objectContaining) and Supertest's res.body are typed `any`.
     files: ['**/*.spec.ts', 'test/**/*.ts'],
     rules: {
       '@typescript-eslint/no-unsafe-assignment': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
       '@typescript-eslint/no-unsafe-argument': 'off',
+      '@typescript-eslint/no-unsafe-call': 'off',
     },
   },
 );

@@ -26,7 +26,8 @@
     "migration:show": "yarn typeorm migration:show",
     "migration:generate": "yarn typeorm migration:generate",
     "migration:create": "typeorm-ts-node-commonjs migration:create",
-    "user:set-password": "ts-node --transpile-only src/cli/set-password.ts"
+    "user:set-password": "ts-node --transpile-only src/cli/set-password.ts",
+    "seed": "ts-node --transpile-only src/cli/seed.ts"
   },
   "dependencies": {
     "@cvsu-dtr/shared": "workspace:*",

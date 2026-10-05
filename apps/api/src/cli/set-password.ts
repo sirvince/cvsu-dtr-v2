@@ -1,16 +1,10 @@
 import { createInterface } from 'node:readline';
 import { parseArgs } from 'node:util';
-import { Module } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { ThrottlerModule } from '@nestjs/throttler';
 import { Role } from '@cvsu-dtr/shared';
 import { DomainError } from '../common/domain/domain-error';
-import { ClockModule } from '../common/time/clock.module';
-import { AppConfigModule } from '../config/app-config';
-import { DatabaseModule } from '../database/database.module';
+import { CliModule } from './cli.module';
 import { UserAdminService } from '../modules/auth/application/user-admin.service';
-import { AuditModule } from '../modules/audit/audit.module';
-import { AuthModule } from '../modules/auth/auth.module';
 
 const USAGE = `Set (or create) a user's password. There is no default password, not even for the first admin.
 
@@ -21,19 +15,6 @@ const USAGE = `Set (or create) a user's password. There is no default password, 
   --create          Create the user if it doesn't exist
   --role            Role to grant (repeatable). Default with --create: HR_ADMIN
   --password-stdin  Read the password from stdin instead of prompting`;
-
-// AuthModule's controller references the throttler guard, so the module must be present.
-@Module({
-  imports: [
-    AppConfigModule,
-    ClockModule,
-    DatabaseModule,
-    AuditModule,
-    AuthModule,
-    ThrottlerModule.forRoot([]),
-  ],
-})
-class CliModule {}
 
 async function main(): Promise<void> {
   const { values } = parseArgs({

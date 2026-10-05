@@ -12,6 +12,9 @@ import { AppConfig, AppConfigModule } from './config/app-config';
 import { DatabaseModule } from './database/database.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
+import { DepartmentsModule } from './modules/departments/departments.module';
+import { DevicesModule } from './modules/devices/devices.module';
+import { EmployeesModule } from './modules/employees/employees.module';
 import { HealthModule } from './modules/health/health.module';
 
 @Module({
@@ -33,6 +36,9 @@ import { HealthModule } from './modules/health/health.module';
     AuditModule,
     AuthModule,
     HealthModule,
+    DepartmentsModule,
+    DevicesModule,
+    EmployeesModule,
   ],
   providers: [
     { provide: APP_PIPE, useFactory: createValidationPipe },
