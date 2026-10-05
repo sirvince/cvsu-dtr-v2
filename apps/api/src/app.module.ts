@@ -1,10 +1,37 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR, APP_PIPE } from '@nestjs/core';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { LoggerModule } from 'nestjs-pino';
+import { AllExceptionsFilter } from './common/http/all-exceptions.filter';
+import { ResponseEnvelopeInterceptor } from './common/http/response-envelope.interceptor';
+import { createValidationPipe } from './common/http/validation';
+import { buildPinoHttpOptions } from './common/logging/pino-options';
+import { ClockModule } from './common/time/clock.module';
+import { AppConfig, AppConfigModule } from './config/app-config';
+import { HealthModule } from './modules/health/health.module';
 
 @Module({
-  imports: [],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    AppConfigModule,
+    LoggerModule.forRootAsync({
+      inject: [AppConfig],
+      useFactory: (config: AppConfig) => ({
+        pinoHttp: buildPinoHttpOptions({
+          nodeEnv: config.get('NODE_ENV'),
+          logLevel: config.get('LOG_LEVEL'),
+        }),
+      }),
+    }),
+    // Generous default per client IP. Login, uploads and exports add stricter @Throttle() limits.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 300 }]),
+    ClockModule,
+    HealthModule,
+  ],
+  providers: [
+    { provide: APP_PIPE, useFactory: createValidationPipe },
+    { provide: APP_FILTER, useClass: AllExceptionsFilter },
+    { provide: APP_INTERCEPTOR, useClass: ResponseEnvelopeInterceptor },
+    { provide: APP_GUARD, useClass: ThrottlerGuard },
+  ],
 })
 export class AppModule {}
